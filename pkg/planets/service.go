@@ -1,9 +1,13 @@
 package planets
 
+import (
+	"starwars-hex/pkg/errs"
+	"starwars-hex/pkg/logger"
+)
+
 // Service is a service interface for planets.
 type Service interface {
 	List() ([]Planet, error)
-	FindByID(id string) (Planet, error)
 	FindByName(name string) (Planet, error)
 	Add(planet Planet) (Planet, error)
 	Delete(id string) error
@@ -18,12 +22,14 @@ func NewService(repo Repository) Service {
 	return planetService{repo}
 }
 
-func (planetService) List() ([]Planet, error) {
-	panic("not implemented") // TODO: Implement
-}
+func (ps planetService) List() ([]Planet, error) {
+	planets, err := ps.repo.List()
+	if err != nil {
+		logger.Error("planetService.List", "ps.repo.List", err)
+		return planets, errs.Internal
+	}
 
-func (planetService) FindByID(id string) (Planet, error) {
-	panic("not implemented") // TODO: Implement
+	return planets, nil
 }
 
 func (planetService) FindByName(name string) (Planet, error) {

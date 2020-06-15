@@ -3,19 +3,33 @@ package planets
 import "testing"
 
 func TestPlanetList(t *testing.T) {
-	mock := RepositoryMock{}
+	expected := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		}, {
+			Name:    "Hoth",
+			Climate: "frozen",
+			Terrain: "tundra, ice caves, mountain ranges",
+		},
+	}
+	mock := RepositoryMock{
+		planets: expected,
+	}
 	svc := NewService(mock)
-	svc.List()
+	planets, err := svc.List()
+	if err != nil {
+		t.Error("expected err to be nil but got: ", err)
+	}
+	if len(planets) != len(expected) {
+		t.Errorf("expected list to have %d items, but got %d", len(expected), len(planets))
+	}
 }
 func TestPlanetAdd(t *testing.T) {
 	mock := RepositoryMock{}
 	svc := NewService(mock)
 	svc.Add(Planet{})
-}
-func TestPlanetFindByID(t *testing.T) {
-	mock := RepositoryMock{}
-	svc := NewService(mock)
-	svc.FindByID("")
 }
 func TestPlanetFindByName(t *testing.T) {
 	mock := RepositoryMock{}

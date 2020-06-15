@@ -2,11 +2,12 @@ package planets
 
 // RepositoryMock is a mock for the Planet repository.
 type RepositoryMock struct {
+	planets []Planet
 }
 
 // List lists all planets.
-func (RepositoryMock) List() ([]Planet, error) {
-	panic("not implemented") // TODO: Implement
+func (m RepositoryMock) List() ([]Planet, error) {
+	return m.planets, nil
 }
 
 // Exists checks if a planet exists.
