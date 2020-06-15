@@ -17,15 +17,12 @@ func (e *HTTPError) Error() string {
 }
 
 var (
-	//Internal represents an internal server error.
-	Internal = &HTTPError{Status: http.StatusInternalServerError, Code: "internal_server_error", Message: "An unexpected internal server error occurred."}
+	//Unexpected represents an internal server error.
+	Unexpected = &HTTPError{Status: http.StatusInternalServerError, Code: "internal_server_error", Message: "An unexpected internal server error occurred."}
 	//BadRequest represents a generic bad request error.
 	BadRequest = &HTTPError{Status: http.StatusBadRequest, Code: "bad_request", Message: "The information sent was in an invalid format."}
 	//NotFound represents a not found error.
 	NotFound = &HTTPError{Status: http.StatusNotFound, Code: "not_found", Message: "The requested resource was not found."}
-
-	//InvalidID represents an invalid ID error.
-	InvalidID = &HTTPError{Status: http.StatusBadRequest, Code: "invalid.id", Message: "The given ID is invalid."}
 
 	//EmptyName represents an empty name error.
 	EmptyName = &HTTPError{Status: http.StatusBadRequest, Code: "name.empty", Message: "The name cannot be empty."}

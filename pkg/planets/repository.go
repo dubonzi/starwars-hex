@@ -6,5 +6,5 @@ type Repository interface {
 	Exists(name string) (bool, error)
 	Insert(planet Planet) error
 	FindByName(name string) (Planet, error)
-	Delete(id string) error
+	Delete(name string) error
 }

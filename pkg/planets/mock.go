@@ -1,5 +1,7 @@
 package planets
 
+import "starwars-hex/pkg/errs"
+
 // RepositoryMock is a mock for the Planet repository.
 type RepositoryMock struct {
 	planets []Planet
@@ -20,17 +22,17 @@ func (RepositoryMock) Insert(planet Planet) error {
 	panic("not implemented") // TODO: Implement
 }
 
-// FindByID finds a planet by its ID.
-func (RepositoryMock) FindByID(id string) (Planet, error) {
-	panic("not implemented") // TODO: Implement
-}
-
 // FindByName finds a planet by its name (exact).
-func (RepositoryMock) FindByName(name string) (Planet, error) {
-	panic("not implemented") // TODO: Implement
+func (m RepositoryMock) FindByName(name string) (Planet, error) {
+	for _, p := range m.planets {
+		if p.Name == name {
+			return p, nil
+		}
+	}
+	return Planet{}, errs.NoDBResults
 }
 
 // Delete deletes a planet.
-func (RepositoryMock) Delete(id string) error {
+func (RepositoryMock) Delete(name string) error {
 	panic("not implemented") // TODO: Implement
 }
