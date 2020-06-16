@@ -141,6 +141,42 @@ func TestPlanetAdd(t *testing.T) {
 }
 
 func TestPlanetDelete(t *testing.T) {
-	svc := NewService(&RepositoryMock{}, nil)
-	svc.Delete("")
+	data := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		}, {
+			Name:    "Hoth",
+			Climate: "frozen",
+			Terrain: "tundra, ice caves, mountain ranges",
+		},
+		{
+			Name:    "Tatooine",
+			Climate: "arid",
+			Terrain: "desert",
+		},
+		{
+			Name:    "Alderaan",
+			Climate: "temperate",
+			Terrain: "grasslands, mountains",
+		},
+	}
+	mock := &RepositoryMock{planets: data}
+	svc := NewService(mock, nil)
+
+	toDelete := "Hoth"
+	err := svc.Delete(toDelete)
+	if err != nil {
+		t.Fatal("expected err to be nil but got ", err)
+	}
+
+	if len(data) == len(mock.planets) {
+		t.Errorf("expected list to have fewer than %d items", len(data))
+	}
+
+	if _, err = svc.FindByName(toDelete); err == nil {
+		t.Errorf("expected planet '%s' to be deleted, but it was found in the list", toDelete)
+	}
+
 }

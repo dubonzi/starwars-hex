@@ -47,6 +47,12 @@ func (m RepositoryMock) FindByName(name string) (Planet, error) {
 }
 
 // Delete deletes a planet.
-func (RepositoryMock) Delete(name string) error {
-	panic("not implemented") // TODO: Implement
+func (m *RepositoryMock) Delete(name string) error {
+	for i, p := range m.planets {
+		if p.Name == name {
+			m.planets = append(m.planets[:i], m.planets[i+1:]...)
+			return nil
+		}
+	}
+	return errs.NoDBResults
 }

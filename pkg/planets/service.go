@@ -94,6 +94,14 @@ func (ps planetService) Add(planet Planet) (Planet, error) {
 }
 
 // Delete deletes a planet.
-func (planetService) Delete(id string) error {
-	panic("not implemented") // TODO: Implement
+func (ps planetService) Delete(name string) error {
+	err := ps.repo.Delete(name)
+	if err != nil {
+		if errors.Is(err, errs.NoDBResults) {
+			return errs.NotFound
+		}
+		logger.Error("planetService.Delete", "ps.repo.Delete", err, name)
+		return errs.Unexpected
+	}
+	return nil
 }
