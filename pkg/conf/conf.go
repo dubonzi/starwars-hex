@@ -6,11 +6,10 @@ import (
 )
 
 var (
-	mongoDBURI              = "mongodb://localhost:27017/"
-	mongoDBDatabaseName     = "starwars"
-	mongoDBTestDatabaseName = "starwars_testdb"
-	apiPort                 = "9080"
-	swapiURL                = "https://swapi.dev/api"
+	mongoDBURI          = "mongodb://localhost:27017/"
+	mongoDBDatabaseName = "starwars"
+	apiPort             = "9080"
+	swapiURL            = "https://swapi.dev/api"
 )
 
 // Load config variables from the environment.
@@ -40,12 +39,6 @@ func MongoDBURI() string {
 //	Default: "starwars"
 func MongoDBDatabaseName() string {
 	return mongoDBDatabaseName
-}
-
-// MongoDBTestDatabaseName name of the test database.
-//	Default: "starwars_testdb"
-func MongoDBTestDatabaseName() string {
-	return mongoDBTestDatabaseName
 }
 
 // APIPort returns the port for the http server.
