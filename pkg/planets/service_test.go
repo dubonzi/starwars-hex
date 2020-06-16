@@ -18,10 +18,7 @@ func TestPlanetList(t *testing.T) {
 			Terrain: "tundra, ice caves, mountain ranges",
 		},
 	}
-	mock := RepositoryMock{
-		planets: expected,
-	}
-	svc := NewService(mock)
+	svc := NewService(&RepositoryMock{planets: expected}, nil)
 	planets, err := svc.List()
 	if err != nil {
 		t.Fatal("expected err to be nil but got: ", err)
@@ -44,8 +41,7 @@ func TestPlanetFindByName(t *testing.T) {
 	}
 
 	expected := "Hoth"
-	mock := RepositoryMock{data}
-	svc := NewService(mock)
+	svc := NewService(&RepositoryMock{data}, nil)
 	planet, err := svc.FindByName(expected)
 	if err != nil {
 		t.Fatal("expected err to be nil but got: ", err)
@@ -65,21 +61,86 @@ func TestPlanetNotFound(t *testing.T) {
 	}
 
 	expected := errs.NotFound
-	mock := RepositoryMock{data}
-	svc := NewService(mock)
+	svc := NewService(&RepositoryMock{data}, nil)
 	_, err := svc.FindByName("Hoth")
 	if !errors.Is(err, expected) {
 		t.Errorf("expected err to be '%v' but got %v", expected, err)
 	}
 }
 
-func TestPlanetAdd(t *testing.T) {
-	mock := RepositoryMock{}
-	svc := NewService(mock)
-	svc.Add(Planet{})
+func TestPlanetAddDuplicated(t *testing.T) {
+	existing := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		},
+	}
+
+	svc := NewService(&RepositoryMock{existing}, nil)
+	_, err := svc.Add(Planet{
+		Name:    "Naboo",
+		Climate: "temperate",
+		Terrain: "grassy hills, swamps, forests, mountains",
+	})
+	if !errors.Is(err, errs.DuplicatedPlanet) {
+		t.Errorf("expected err to be  '%v' but got '%v'", errs.DuplicatedPlanet, err)
+	}
+
 }
+
+func TestPlanetAddInvalid(t *testing.T) {
+	svc := NewService(&RepositoryMock{}, nil)
+
+	_, err := svc.Add(Planet{})
+	if !errors.Is(err, errs.EmptyName) {
+		t.Errorf("expected err to be '%v' but got '%v'", errs.EmptyName, err)
+	}
+
+	_, err = svc.Add(Planet{
+		Name: "Hoth",
+	})
+	if !errors.Is(err, errs.EmptyClimate) {
+		t.Errorf("expected err to be '%v' but got '%v'", errs.EmptyClimate, err)
+	}
+
+	_, err = svc.Add(Planet{
+		Name:    "Hoth",
+		Climate: "frozen",
+	})
+	if !errors.Is(err, errs.EmptyTerrain) {
+		t.Errorf("expected err to be '%v' but got '%v'", errs.EmptyTerrain, err)
+	}
+}
+
+func TestPlanetAdd(t *testing.T) {
+	svc := NewService(&RepositoryMock{}, SwapiClientMock{})
+
+	expected := Planet{
+		Name:    "Naboo",
+		Climate: "temperate",
+		Terrain: "grassy hills, swamps, forests, mountains",
+	}
+
+	planet, err := svc.Add(expected)
+	if err != nil {
+		t.Fatal("expected err to be nil but got: ", err)
+	}
+
+	if planet.Name != expected.Name {
+		t.Errorf("expected planet name to be '%s' but got '%s'", expected.Name, planet.Name)
+	}
+
+	if planet.Climate != expected.Climate {
+		t.Errorf("expected planet climate to be '%s' but got '%s'", expected.Climate, planet.Climate)
+	}
+
+	if planet.Terrain != expected.Terrain {
+		t.Errorf("expected planet terrain to be '%s' but got '%s'", expected.Terrain, planet.Terrain)
+	}
+}
+
 func TestPlanetDelete(t *testing.T) {
-	mock := RepositoryMock{}
-	svc := NewService(mock)
+	svc := NewService(&RepositoryMock{}, nil)
 	svc.Delete("")
 }

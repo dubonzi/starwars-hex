@@ -15,12 +15,13 @@ type Service interface {
 }
 
 type planetService struct {
-	repo Repository
+	repo  Repository
+	swapi SwapiClient
 }
 
 // NewService creates a new planets Service.
-func NewService(repo Repository) Service {
-	return planetService{repo}
+func NewService(repo Repository, swapi SwapiClient) Service {
+	return planetService{repo, swapi}
 }
 
 // List lists all planets.
@@ -49,8 +50,47 @@ func (ps planetService) FindByName(name string) (Planet, error) {
 }
 
 // Add adds a new planet.
-func (planetService) Add(planet Planet) (Planet, error) {
-	panic("not implemented") // TODO: Implement
+func (ps planetService) Add(planet Planet) (Planet, error) {
+	if planet.Name == "" {
+		return Planet{}, errs.EmptyName
+	}
+	if planet.Climate == "" {
+		return Planet{}, errs.EmptyClimate
+	}
+	if planet.Terrain == "" {
+		return Planet{}, errs.EmptyTerrain
+	}
+
+	exists, err := ps.repo.Exists(planet.Name)
+	if err != nil {
+		logger.Error("planetService.Add", "ps.repo.Exists", err, planet.Name)
+		return Planet{}, err
+	}
+	if exists {
+		return Planet{}, errs.DuplicatedPlanet
+	}
+
+	appearances, err := ps.swapi.GetFilmAppearances(planet.Name)
+	if err != nil {
+		logger.Error("planetService.Add", "ps.swapi.GetFilmAppearances", err, planet.Name)
+		return Planet{}, errs.Unexpected
+	}
+
+	planet.FilmAppearances = appearances
+
+	err = ps.repo.Insert(planet)
+	if err != nil {
+		logger.Error("planetService.Add", "ps.repo.Insert", err)
+		return Planet{}, errs.Unexpected
+	}
+
+	planet, err = ps.repo.FindByName(planet.Name)
+	if err != nil {
+		logger.Error("planetService.Add", "ps.repo.FindByName", err, planet.Name)
+		return Planet{}, errs.Unexpected
+	}
+
+	return planet, nil
 }
 
 // Delete deletes a planet.

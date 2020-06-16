@@ -7,19 +7,33 @@ type RepositoryMock struct {
 	planets []Planet
 }
 
+// SwapiClientMock is a mock for the swapi api client.
+type SwapiClientMock struct{}
+
+// GetFilmAppearances mocks the GetFilmAppearances method.
+func (SwapiClientMock) GetFilmAppearances(name string) (int, error) {
+	return 1, nil
+}
+
 // List lists all planets.
 func (m RepositoryMock) List() ([]Planet, error) {
 	return m.planets, nil
 }
 
 // Exists checks if a planet exists.
-func (RepositoryMock) Exists(name string) (bool, error) {
-	panic("not implemented") // TODO: Implement
+func (m RepositoryMock) Exists(name string) (bool, error) {
+	for _, p := range m.planets {
+		if p.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // Insert inserts a new planet.
-func (RepositoryMock) Insert(planet Planet) error {
-	panic("not implemented") // TODO: Implement
+func (m *RepositoryMock) Insert(planet Planet) error {
+	m.planets = append(m.planets, planet)
+	return nil
 }
 
 // FindByName finds a planet by its name (exact).
