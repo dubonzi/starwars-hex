@@ -5,6 +5,7 @@ import "starwars-hex/pkg/errs"
 // RepositoryMock is a mock for the Planet repository.
 type RepositoryMock struct {
 	planets []Planet
+	// TODO: Improve test coverage by adding a 'fail' flag to cause method calls to fail
 }
 
 // SwapiClientMock is a mock for the swapi api client.
