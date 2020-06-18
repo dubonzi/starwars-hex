@@ -64,7 +64,7 @@ func (ps planetService) Add(planet Planet) (Planet, error) {
 	exists, err := ps.repo.Exists(planet.Name)
 	if err != nil {
 		logger.Error("planetService.Add", "ps.repo.Exists", err, planet.Name)
-		return Planet{}, err
+		return Planet{}, errs.Unexpected
 	}
 	if exists {
 		return Planet{}, errs.DuplicatedPlanet

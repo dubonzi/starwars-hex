@@ -3,6 +3,7 @@ package planets
 import (
 	"errors"
 	"starwars-hex/pkg/errs"
+	"starwars-hex/pkg/test"
 	"testing"
 )
 
@@ -27,6 +28,28 @@ func TestPlanetList(t *testing.T) {
 		t.Errorf("expected list to have %d items, but got %d", len(expected), len(planets))
 	}
 }
+
+func TestPlanetFailingList(t *testing.T) {
+	expected := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		},
+	}
+	svc := NewService(&RepositoryMock{
+		planets: expected,
+		failer:  test.RandomFail{FailRate: 0.1},
+	}, nil)
+
+	if _, err := svc.List(); err != nil {
+		_, ok := err.(*errs.HTTPError)
+		if !ok {
+			t.Errorf("expected err to be of type *errs.HTTPError but got %T", err)
+		}
+	}
+
+}
 func TestPlanetFindByName(t *testing.T) {
 	data := []Planet{
 		{
@@ -41,13 +64,35 @@ func TestPlanetFindByName(t *testing.T) {
 	}
 
 	expected := "Hoth"
-	svc := NewService(&RepositoryMock{data}, nil)
+	svc := NewService(&RepositoryMock{planets: data}, nil)
 	planet, err := svc.FindByName(expected)
 	if err != nil {
 		t.Fatal("expected err to be nil but got: ", err)
 	}
 	if planet.Name != expected {
 		t.Errorf("expected planet name to be %s but got %s", expected, planet.Name)
+	}
+}
+
+func TestPlanetFailingFindByName(t *testing.T) {
+	data := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		},
+	}
+
+	svc := NewService(&RepositoryMock{
+		planets: data,
+		failer:  test.RandomFail{FailRate: 0.1},
+	}, nil)
+
+	if _, err := svc.FindByName("Naboo"); err != nil {
+		_, ok := err.(*errs.HTTPError)
+		if !ok {
+			t.Errorf("expected err to be of type *errs.HTTPError but got %T", err)
+		}
 	}
 }
 
@@ -61,7 +106,7 @@ func TestPlanetNotFound(t *testing.T) {
 	}
 
 	expected := errs.NotFound
-	svc := NewService(&RepositoryMock{data}, nil)
+	svc := NewService(&RepositoryMock{planets: data}, nil)
 	_, err := svc.FindByName("Hoth")
 	if !errors.Is(err, expected) {
 		t.Errorf("expected err to be '%v' but got %v", expected, err)
@@ -77,7 +122,7 @@ func TestPlanetAddDuplicated(t *testing.T) {
 		},
 	}
 
-	svc := NewService(&RepositoryMock{existing}, nil)
+	svc := NewService(&RepositoryMock{planets: existing}, nil)
 	_, err := svc.Add(Planet{
 		Name:    "Naboo",
 		Climate: "temperate",
@@ -114,13 +159,14 @@ func TestPlanetAddInvalid(t *testing.T) {
 }
 
 func TestPlanetAdd(t *testing.T) {
-	svc := NewService(&RepositoryMock{}, SwapiClientMock{})
-
+	expectedAppearances := 5
 	expected := Planet{
 		Name:    "Naboo",
 		Climate: "temperate",
 		Terrain: "grassy hills, swamps, forests, mountains",
 	}
+
+	svc := NewService(&RepositoryMock{}, SwapiClientMock{appearances: expectedAppearances})
 
 	planet, err := svc.Add(expected)
 	if err != nil {
@@ -137,6 +183,50 @@ func TestPlanetAdd(t *testing.T) {
 
 	if planet.Terrain != expected.Terrain {
 		t.Errorf("expected planet terrain to be '%s' but got '%s'", expected.Terrain, planet.Terrain)
+	}
+
+	if planet.FilmAppearances != expectedAppearances {
+		t.Errorf("expected appearances to be %d but got %d", expectedAppearances, planet.FilmAppearances)
+	}
+}
+
+func TestPlanetFailingAdd(t *testing.T) {
+	svc := NewService(&RepositoryMock{
+		failer: test.RandomFail{FailRate: 0.1},
+	}, SwapiClientMock{})
+
+	planet := Planet{
+		Name:    "Naboo",
+		Climate: "temperate",
+		Terrain: "grassy hills, swamps, forests, mountains",
+	}
+
+	_, err := svc.Add(planet)
+	if err != nil {
+		_, ok := err.(*errs.HTTPError)
+		if !ok {
+			t.Errorf("expected err to be of type *errs.HTTPError but got %T", err)
+		}
+	}
+}
+
+func TestSwapiFailingGetAppearances(t *testing.T) {
+	svc := NewService(&RepositoryMock{}, SwapiClientMock{
+		failer: test.RandomFail{FailRate: 0.1},
+	})
+
+	planet := Planet{
+		Name:    "Naboo",
+		Climate: "temperate",
+		Terrain: "grassy hills, swamps, forests, mountains",
+	}
+
+	_, err := svc.Add(planet)
+	if err != nil {
+		_, ok := err.(*errs.HTTPError)
+		if !ok {
+			t.Errorf("expected err to be of type *errs.HTTPError but got %T", err)
+		}
 	}
 }
 
@@ -178,5 +268,48 @@ func TestPlanetDelete(t *testing.T) {
 	if _, err = svc.FindByName(toDelete); err == nil {
 		t.Errorf("expected planet '%s' to be deleted, but it was found in the list", toDelete)
 	}
+}
 
+func TestPlanetDeleteNotFound(t *testing.T) {
+	data := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		},
+	}
+	mock := &RepositoryMock{planets: data}
+	svc := NewService(mock, nil)
+
+	toDelete := "Hoth"
+	err := svc.Delete(toDelete)
+	if !errors.Is(err, errs.NotFound) {
+		t.Errorf("expected err to be *errs.NotFound but got %T", err)
+	}
+}
+
+func TestPlanetFailingDelete(t *testing.T) {
+	data := []Planet{
+		{
+			Name:    "Naboo",
+			Climate: "temperate",
+			Terrain: "grassy hills, swamps, forests, mountains",
+		}, {
+			Name:    "Hoth",
+			Climate: "frozen",
+			Terrain: "tundra, ice caves, mountain ranges",
+		},
+	}
+	mock := &RepositoryMock{
+		planets: data,
+		failer:  test.RandomFail{FailRate: 0.1},
+	}
+	svc := NewService(mock, nil)
+
+	if err := svc.Delete("Naboo"); err != nil {
+		_, ok := err.(*errs.HTTPError)
+		if !ok {
+			t.Errorf("expected err to be of type *errs.HTTPError but got %T", err)
+		}
+	}
 }
