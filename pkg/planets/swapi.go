@@ -15,6 +15,11 @@ type SwapiClient interface {
 
 type swapiClientImpl struct{}
 
+// NewSwapiClient creates a new SWAPI client.
+func NewSwapiClient() SwapiClient {
+	return swapiClientImpl{}
+}
+
 // GetFilmAppearances returns the number of films a planet with `name` appeared on.
 // If multiple planets are found, the first planet from the list will be chosen.
 // Returns 0 if no planets are found.
