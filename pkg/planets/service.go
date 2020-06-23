@@ -32,7 +32,7 @@ func (ps planetService) List() ([]Planet, error) {
 		return planets, errs.Unexpected
 	}
 
-	return planets, errs.BadRequest
+	return planets, nil
 }
 
 // FindByName finds a planet by its name.

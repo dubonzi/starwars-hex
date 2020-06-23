@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"starwars-hex/pkg/conf"
@@ -34,11 +35,24 @@ func main() {
 }
 
 func httpErrorHandler(err error, c echo.Context) {
-	herr, ok := err.(*errs.HTTPError)
-	if !ok {
+	var herr *errs.HTTPError
+	switch err.(type) {
+	case *echo.HTTPError:
+		herr = errs.NewHTTPErrorFromEcho(err.(*echo.HTTPError))
+	case *errs.HTTPError:
+		herr = err.(*errs.HTTPError)
+	default:
+		logger.Error("[ECHO] main.httpErrorHandler", "", err)
 		herr = errs.Unexpected
 	}
-	c.JSON(herr.Status, herr)
+
+	jerr := c.JSON(herr.Status, herr)
+	if jerr != nil {
+		logger.Error("main.httpErrorHandler", "c.JSON", jerr)
+		c.Response().Header().Set("Content-type", "text/plain")
+		c.Response().WriteHeader(http.StatusInternalServerError)
+		c.Response().Write([]byte("an unexpected error occurred"))
+	}
 }
 
 func createRouter(db *mongo.Database) *echo.Echo {

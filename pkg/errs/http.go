@@ -2,6 +2,8 @@ package errs
 
 import (
 	"net/http"
+
+	"github.com/labstack/echo/v4"
 )
 
 // HTTPError is an error message intended to be sent to the api clients.
@@ -14,6 +16,18 @@ type HTTPError struct {
 // Error implements the Error interface.
 func (e *HTTPError) Error() string {
 	return e.Message
+}
+
+// NewHTTPErrorFromEcho creates a new HTTPError from a *echo.HTTPError.
+func NewHTTPErrorFromEcho(err *echo.HTTPError) *HTTPError {
+	echoMsg, ok := err.Message.(string)
+	if !ok {
+		return Unexpected
+	}
+	return &HTTPError{
+		Status:  err.Code,
+		Message: echoMsg,
+	}
 }
 
 var (
