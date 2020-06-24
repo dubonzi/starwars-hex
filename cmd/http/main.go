@@ -12,6 +12,7 @@ import (
 	"starwars-hex/pkg/repository/mongodb"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -59,6 +60,11 @@ func createRouter(db *mongo.Database) *echo.Echo {
 	router := echo.New()
 	router.HTTPErrorHandler = httpErrorHandler
 	router.HideBanner = true
+	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		Skipper:      middleware.DefaultSkipper,
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Accept", "Content-Type", "X-CSRF-Token", "Cache-Control"},
+	}))
 
 	planetDB := mongodb.NewPlanetDB(db.Collection("planets"))
 	planetSvc := planets.NewService(planetDB, planets.NewSwapiClient())
