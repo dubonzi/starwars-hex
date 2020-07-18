@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -32,6 +33,7 @@ func main() {
 
 	<-stop
 	log.Println("- Stopping REST Api -")
+	router.Shutdown(context.Background())
 	mongodb.Close()
 }
 
